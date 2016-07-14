@@ -1,9 +1,10 @@
 package dao;
 
+import common.ExceptionalConsumer;
+import common.ExceptionalFunction;
+import common.ExceptionalRunnable;
 import model.Contact;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
@@ -11,37 +12,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings("WeakerAccess")
 public class StandAlonePlainJdbcContactDao implements ContactDao {
 
+    private static final String DRIVER_CLASS_NAME = "org.h2.Driver";
+    private static final String JDBC_URL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1";
+
     static {
-        try {
-            Class.forName("org.h2.Driver");
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        ExceptionalRunnable.run(() -> Class.forName(DRIVER_CLASS_NAME));
     }
 
     public StandAlonePlainJdbcContactDao(String... sqlFilePaths) {
-        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1");
+        try (Connection connection = DriverManager.getConnection(JDBC_URL);
              Statement statement = connection.createStatement()) {
             Arrays.stream(sqlFilePaths)
-                    .map(sqlFilePath -> Paths.get(sqlFilePath))
-                    .map(path -> {
-                        try {
-                            return Files.readAllBytes(path);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+                    .map(Paths::get)
+                    .map(ExceptionalFunction.carry(Files::readAllBytes))
+                    .map(String::new)
                     .flatMap(s -> Arrays.stream(s.split(";")))
-                    .forEach(sql -> {
-                        try {
-                            statement.addBatch(sql);
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
-                    });
+                    .forEach(ExceptionalConsumer.carry(statement::addBatch));
             statement.executeBatch();
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -50,7 +39,7 @@ public class StandAlonePlainJdbcContactDao implements ContactDao {
 
     @Override
     public List<Contact> findAll() {
-        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1");
+        try (Connection connection = DriverManager.getConnection(JDBC_URL);
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery("SELECT * FROM Contact")) {
             List<Contact> contacts = new ArrayList<>();
