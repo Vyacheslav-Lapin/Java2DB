@@ -1,6 +1,6 @@
 package dao;
 
-import common.ExceptionalRunnable;
+import common.functions.ExceptionalRunnable;
 import model.Contact;
 
 import java.nio.file.Files;
@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static common.ExceptionalConsumer.toUncheckedConsumer;
-import static common.ExceptionalFunction.toUncheckedFunction;
+import static common.functions.ExceptionalConsumer.toUncheckedConsumer;
+import static common.functions.ExceptionalFunction.toUncheckedFunction;
 
 @SuppressWarnings("WeakerAccess")
 public class StandAlonePlainJdbcContactDao implements ContactDao {
@@ -24,7 +24,7 @@ public class StandAlonePlainJdbcContactDao implements ContactDao {
     }
 
     public StandAlonePlainJdbcContactDao(String... sqlFilePaths) {
-        try (Connection connection = DriverManager.getConnection(JDBC_URL);
+        try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
             Arrays.stream(sqlFilePaths)
                     .map(Paths::get)
@@ -41,9 +41,9 @@ public class StandAlonePlainJdbcContactDao implements ContactDao {
 
     @Override
     public List<Contact> findAll() {
-        try (Connection connection = DriverManager.getConnection(JDBC_URL);
+        try (Connection connection = getConnection();
              Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT * FROM Contact")) {
+             ResultSet resultSet = statement.executeQuery("SELECT id, first_name, last_name, birth_date FROM Contact")) {
             List<Contact> contacts = new ArrayList<>();
             while (resultSet.next())
                 contacts.add(new Contact(
@@ -55,5 +55,9 @@ public class StandAlonePlainJdbcContactDao implements ContactDao {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(JDBC_URL);
     }
 }

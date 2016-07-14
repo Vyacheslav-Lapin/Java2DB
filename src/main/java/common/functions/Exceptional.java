@@ -1,4 +1,6 @@
-package common;
+package common.functions;
+
+import common.Wrapper;
 
 import java.util.Optional;
 import java.util.function.Function;
