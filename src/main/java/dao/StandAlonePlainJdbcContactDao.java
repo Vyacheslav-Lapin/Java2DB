@@ -43,20 +43,23 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
 
     @Override
     public List<Contact> findAll() {
-        return mapStatement(statement -> {
-            try (ResultSet resultSet = statement.executeQuery("SELECT id, first_name, last_name, birth_date FROM Contact")) {
-                List<Contact> contacts = new ArrayList<>();
-                while (resultSet.next())
-                    contacts.add(new Contact(
-                            resultSet.getLong("id"),
-                            resultSet.getString("first_name"),
-                            resultSet.getString("last_name"),
-                            resultSet.getDate("birth_date").toLocalDate()));
-                return contacts;
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }).getOrThrowUnchecked();
+        return mapResultSet(
+                "SELECT id, first_name, last_name, birth_date FROM Contact",
+                resultSet -> {
+                    try {
+                        List<Contact> contacts = new ArrayList<>();
+                        while (resultSet.next())
+                            contacts.add(new Contact(
+                                    resultSet.getLong("id"),
+                                    resultSet.getString("first_name"),
+                                    resultSet.getString("last_name"),
+                                    resultSet.getDate("birth_date").toLocalDate()));
+                        return contacts;
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+        ).getOrThrowUnchecked();
     }
 
     @Override
