@@ -25,8 +25,8 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
     }
 
     public StandAlonePlainJdbcContactDao(String... sqlFilePaths) {
-        mapConnection(connection -> {
-            try (Statement statement = connection.createStatement()) {
+        mapStatement(statement -> {
+            try {
                 Arrays.stream(sqlFilePaths)
                         .map(Paths::get)
                         .map(toUncheckedFunction(Files::readAllBytes))
@@ -43,9 +43,8 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
 
     @Override
     public List<Contact> findAll() {
-        return mapConnection(connection -> {
-            try (Statement statement = connection.createStatement();
-                 ResultSet resultSet = statement.executeQuery("SELECT id, first_name, last_name, birth_date FROM Contact")) {
+        return mapStatement(statement -> {
+            try (ResultSet resultSet = statement.executeQuery("SELECT id, first_name, last_name, birth_date FROM Contact")) {
                 List<Contact> contacts = new ArrayList<>();
                 while (resultSet.next())
                     contacts.add(new Contact(

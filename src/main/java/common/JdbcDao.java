@@ -5,6 +5,7 @@ import common.functions.ExceptionalSupplier;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public interface JdbcDao {
 
@@ -13,9 +14,18 @@ public interface JdbcDao {
     default <T> ExceptionalSupplier<T, SQLException> mapConnection(
             ExceptionalFunction<Connection, T, SQLException> connectionMapper) {
         return () -> {
-            try (Connection connection = getConnection()) {
+            try (final Connection connection = getConnection()) {
                 return connectionMapper.apply(connection).getOrThrow();
             }
         };
+    }
+
+    default <T> ExceptionalSupplier<T, SQLException> mapStatement(
+            ExceptionalFunction<Statement, T, SQLException> statementMapper) {
+        return mapConnection(connection -> {
+            try (final Statement statement = connection.createStatement()) {
+                return statementMapper.apply(statement).getOrThrow();
+            }
+        });
     }
 }
