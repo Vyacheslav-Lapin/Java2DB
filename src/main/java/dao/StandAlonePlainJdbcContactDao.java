@@ -64,7 +64,7 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
                         resultSet.getString("first_name"),
                         resultSet.getString("last_name"),
                         resultSet.getDate("birth_date").toLocalDate())
-        ).get().toOptional();
+        ).getAsOptional();
     }
 
     @Override

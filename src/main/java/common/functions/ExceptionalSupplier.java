@@ -1,5 +1,6 @@
 package common.functions;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 @FunctionalInterface
@@ -23,6 +24,10 @@ public interface ExceptionalSupplier<T, E extends Throwable> extends Supplier<Ex
 
     default void executeOrThrowUnchecked() {
         get().getOrThrowUnchecked();
+    }
+
+    default Optional<T> getAsOptional() {
+        return get().toOptional();
     }
 
     static <T, E extends Exception> Exceptional<T, E> call(ExceptionalSupplier<T, E> exceptionalSupplier) {
