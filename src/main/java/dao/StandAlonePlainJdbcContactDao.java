@@ -1,7 +1,5 @@
 package dao;
 
-import common.ExceptionalConsumer;
-import common.ExceptionalFunction;
 import common.ExceptionalRunnable;
 import model.Contact;
 
@@ -11,6 +9,9 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static common.ExceptionalConsumer.toUncheckedConsumer;
+import static common.ExceptionalFunction.toUncheckedFunction;
 
 @SuppressWarnings("WeakerAccess")
 public class StandAlonePlainJdbcContactDao implements ContactDao {
@@ -27,10 +28,11 @@ public class StandAlonePlainJdbcContactDao implements ContactDao {
              Statement statement = connection.createStatement()) {
             Arrays.stream(sqlFilePaths)
                     .map(Paths::get)
-                    .map(ExceptionalFunction.carry(Files::readAllBytes))
+                    .map(toUncheckedFunction(Files::readAllBytes))
                     .map(String::new)
-                    .flatMap(s -> Arrays.stream(s.split(";")))
-                    .forEach(ExceptionalConsumer.carry(statement::addBatch));
+                    .map(s -> s.split(";"))
+                    .flatMap(Arrays::stream)
+                    .forEach(toUncheckedConsumer(statement::addBatch));
             statement.executeBatch();
         } catch (SQLException e) {
             throw new RuntimeException(e);

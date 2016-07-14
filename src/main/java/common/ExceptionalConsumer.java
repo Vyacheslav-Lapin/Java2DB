@@ -21,7 +21,7 @@ public interface ExceptionalConsumer<T, E extends Throwable> extends Consumer<T>
         throw new RuntimeException(e);
     }
 
-    static <T, E extends Throwable> Consumer<T> carry(ExceptionalConsumer<T, E> exceptionalConsumer) {
+    static <T, E extends Throwable> Consumer<T> toUncheckedConsumer(ExceptionalConsumer<T, E> exceptionalConsumer) {
         return exceptionalConsumer;
     }
 

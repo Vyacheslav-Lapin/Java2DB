@@ -22,7 +22,7 @@ public interface ExceptionalFunction<T, R, E extends Throwable> extends Function
         return exceptionalFunction.apply(param).getOrThrowUnchecked();
     }
 
-    static <T, R, E extends Throwable> Function<T, R> carry(ExceptionalFunction<T, R, E> exceptionalFunction) {
+    static <T, R, E extends Throwable> Function<T, R> toUncheckedFunction(ExceptionalFunction<T, R, E> exceptionalFunction) {
         return t -> getOrThrowUnchecked(exceptionalFunction, t);
     }
 }
