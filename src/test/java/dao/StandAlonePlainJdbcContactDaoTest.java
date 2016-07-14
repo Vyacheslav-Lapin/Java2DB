@@ -3,9 +3,13 @@ package dao;
 import model.Contact;
 import org.junit.Test;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class StandAlonePlainJdbcContactDaoTest {
@@ -23,4 +27,9 @@ public class StandAlonePlainJdbcContactDaoTest {
                 contacts.toString());
     }
 
+    @Test
+    public void get() throws Exception {
+        Contact contact = new Contact(1, "Chris", "Schaefer", LocalDate.parse("1981-05-03"));
+        assertThat(contactDao.get(1), is(Optional.of(contact)));
+    }
 }

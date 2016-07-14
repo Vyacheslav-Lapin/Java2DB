@@ -10,6 +10,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static common.functions.ExceptionalConsumer.toUncheckedConsumer;
 import static common.functions.ExceptionalFunction.toUncheckedFunction;
@@ -60,6 +61,17 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
                     }
                 }
         ).getOrThrowUnchecked();
+    }
+
+    @Override
+    public Optional<Contact> get(long id) {
+        return mapResultSet(
+                "SELECT first_name, last_name, birth_date from Contact",
+                resultSet -> !resultSet.next() ? null : new Contact(id,
+                        resultSet.getString("first_name"),
+                        resultSet.getString("last_name"),
+                        resultSet.getDate("birth_date").toLocalDate())
+        ).get().toOptional();
     }
 
     @Override
