@@ -25,4 +25,9 @@ public interface ExceptionalFunction<T, R, E extends Throwable> extends Function
     static <T, R, E extends Throwable> Function<T, R> toUncheckedFunction(ExceptionalFunction<T, R, E> exceptionalFunction) {
         return t -> getOrThrowUnchecked(exceptionalFunction, t);
     }
+
+    static <T, R, E extends Exception> ExceptionalSupplier<R, E> carry(ExceptionalFunction<T, R, E> exceptionalFunction,
+                                                                       T param) {
+        return () -> exceptionalFunction.get(param);
+    }
 }
