@@ -2,6 +2,7 @@ package dao;
 
 import common.JdbcDao;
 import common.functions.ExceptionalRunnable;
+import common.functions.ExceptionalSupplier;
 import model.Contact;
 
 import java.nio.file.Files;
@@ -27,18 +28,14 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
 
     public StandAlonePlainJdbcContactDao(String... sqlFilePaths) {
         mapStatement(statement -> {
-            try {
-                Arrays.stream(sqlFilePaths)
-                        .map(Paths::get)
-                        .map(toUncheckedFunction(Files::readAllBytes))
-                        .map(String::new)
-                        .map(s -> s.split(";"))
-                        .flatMap(Arrays::stream)
-                        .forEach(toUncheckedConsumer(statement::addBatch));
-                return statement.executeBatch();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
+            Arrays.stream(sqlFilePaths)
+                    .map(Paths::get)
+                    .map(toUncheckedFunction(Files::readAllBytes))
+                    .map(String::new)
+                    .map(s -> s.split(";"))
+                    .flatMap(Arrays::stream)
+                    .forEach(toUncheckedConsumer(statement::addBatch));
+            return statement.executeBatch();
         }).executeOrThrowUnchecked();
     }
 
@@ -47,18 +44,14 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
         return mapResultSet(
                 "SELECT id, first_name, last_name, birth_date FROM Contact",
                 resultSet -> {
-                    try {
-                        List<Contact> contacts = new ArrayList<>();
-                        while (resultSet.next())
-                            contacts.add(new Contact(
-                                    resultSet.getLong("id"),
-                                    resultSet.getString("first_name"),
-                                    resultSet.getString("last_name"),
-                                    resultSet.getDate("birth_date").toLocalDate()));
-                        return contacts;
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
+                    List<Contact> contacts = new ArrayList<>();
+                    while (resultSet.next())
+                        contacts.add(new Contact(
+                                resultSet.getLong("id"),
+                                resultSet.getString("first_name"),
+                                resultSet.getString("last_name"),
+                                resultSet.getDate("birth_date").toLocalDate()));
+                    return contacts;
                 }
         ).getOrThrowUnchecked();
     }
@@ -66,7 +59,7 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
     @Override
     public Optional<Contact> get(long id) {
         return mapResultSet(
-                "SELECT first_name, last_name, birth_date from Contact",
+                "SELECT first_name, last_name, birth_date FROM Contact",
                 resultSet -> !resultSet.next() ? null : new Contact(id,
                         resultSet.getString("first_name"),
                         resultSet.getString("last_name"),
@@ -76,10 +69,6 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
 
     @Override
     public Connection getConnection() {
-        try {
-            return DriverManager.getConnection(JDBC_URL);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return ExceptionalSupplier.getOrThrowUnchecked(() -> DriverManager.getConnection(JDBC_URL));
     }
 }
