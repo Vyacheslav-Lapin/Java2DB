@@ -1,5 +1,6 @@
 package common;
 
+import common.functions.ExceptionalConsumer;
 import common.functions.ExceptionalFunction;
 import common.functions.ExceptionalRunnable;
 import common.functions.ExceptionalSupplier;
@@ -9,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public interface JdbcDao {
 
@@ -49,13 +51,20 @@ public interface JdbcDao {
                 resultSet -> resultSet.next() ? Optional.of(rowMapper.get(resultSet)) : Optional.empty());
     }
 
-    default <T> ExceptionalRunnable<SQLException> mapRows(
+    default ExceptionalRunnable<SQLException> mapRows(
             String sql,
-            ExceptionalFunction<ResultSet, T, SQLException> rowMapper) {
+            ExceptionalConsumer<ResultSet, SQLException> rowMapper) {
         return mapResultSet(sql, resultSet -> {
             while (resultSet.next())
-                rowMapper.get(resultSet);
+                rowMapper.call(resultSet);
             return 0;
         })::executeOrThrowUnchecked;
+    }
+
+    default <T> ExceptionalRunnable<SQLException> mapAndReduceRows(
+            String sql,
+            ExceptionalFunction<ResultSet, T, SQLException> rowMapper,
+            Consumer<T> reducer) {
+        return mapRows(sql, resultSet -> reducer.accept(rowMapper.get(resultSet)));
     }
 }
