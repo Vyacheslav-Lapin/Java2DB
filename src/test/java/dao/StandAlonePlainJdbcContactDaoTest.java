@@ -10,7 +10,6 @@ import java.util.Optional;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class StandAlonePlainJdbcContactDaoTest {
 
@@ -19,7 +18,6 @@ public class StandAlonePlainJdbcContactDaoTest {
     @Test
     public void findAll() throws Exception {
         List<Contact> contacts = contactDao.findAll();
-        assertTrue(contacts.size() == 3);
         assertEquals("[" +
                         "Contact(id=1, firstName=Chris, lastName=Schaefer, birthDate=1981-05-03), " +
                         "Contact(id=2, firstName=Scott, lastName=Tiger, birthDate=1990-11-02), " +
