@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,18 +56,19 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
     }
 
     @Override
-    public Optional<Contact> get(long id) {
+    public ExceptionalSupplier<Optional<Contact>, SQLException> getQuery(long id) {
         return mapRow(
                 "SELECT first_name, last_name, birth_date FROM Contact",
                 resultSet -> new Contact(id,
                         resultSet.getString("first_name"),
                         resultSet.getString("last_name"),
                         resultSet.getDate("birth_date").toLocalDate())
-        ).getOrThrowUnchecked();
+        );
     }
 
     @Override
     public Connection getConnection() {
+        // TODO: 17/07/16 replace by requesting connection pool (DataSource)
         return ExceptionalSupplier.getOrThrowUnchecked(() -> DriverManager.getConnection(JDBC_URL));
     }
 }
