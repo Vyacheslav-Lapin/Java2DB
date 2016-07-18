@@ -58,7 +58,7 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
     @Override
     public ExceptionalSupplier<Optional<Contact>, SQLException> getQuery(long id) {
         return mapRow(
-                "SELECT first_name, last_name, birth_date FROM Contact",
+                "SELECT first_name, last_name, birth_date FROM Contact WHERE id = " + id,
                 resultSet -> new Contact(id,
                         resultSet.getString("first_name"),
                         resultSet.getString("last_name"),

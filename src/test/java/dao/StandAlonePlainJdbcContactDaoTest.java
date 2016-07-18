@@ -27,7 +27,7 @@ public class StandAlonePlainJdbcContactDaoTest {
 
     @Test
     public void get() throws Exception {
-        Contact contact = new Contact(1, "Chris", "Schaefer", LocalDate.parse("1981-05-03"));
-        assertThat(contactDao.get(1), is(Optional.of(contact)));
+        Contact contact = new Contact(2, "Scott", "Tiger", LocalDate.parse("1990-11-02"));
+        assertThat(contactDao.get(2), is(Optional.of(contact)));
     }
 }
