@@ -67,7 +67,7 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
     }
 
     @Override
-    public Connection getConnection() {
+    public Connection get() {
         // TODO: 17/07/16 replace by requesting connection pool (DataSource)
         return ExceptionalSupplier.getOrThrowUnchecked(() -> DriverManager.getConnection(JDBC_URL));
     }

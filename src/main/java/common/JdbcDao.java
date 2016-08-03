@@ -11,15 +11,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-public interface JdbcDao {
-
-    Connection getConnection();
+@FunctionalInterface
+public interface JdbcDao extends Supplier<Connection> {
 
     default <T> ExceptionalSupplier<T, SQLException> mapConnection(
             ExceptionalFunction<Connection, T, SQLException> connectionMapper) {
         return () -> {
-            try (final Connection connection = getConnection()) {
+            try (final Connection connection = get()) {
                 return connectionMapper.get(connection);
             }
         };
