@@ -1,6 +1,8 @@
 package dao;
 
 import common.JdbcDao;
+import common.Pool;
+import common.functions.ExceptionalFunction;
 import common.functions.ExceptionalRunnable;
 import common.functions.ExceptionalSupplier;
 import model.Contact;
@@ -28,7 +30,17 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
         ExceptionalRunnable.run(() -> Class.forName(DRIVER_CLASS_NAME));
     }
 
+    private Pool<Connection> connectionPool;
+
     public StandAlonePlainJdbcContactDao(String... sqlFilePaths) {
+        this(new Pool<>(Connection.class,
+                        ExceptionalFunction.carryUnchacked(DriverManager::getConnection, JDBC_URL),
+                        5),
+                sqlFilePaths);
+    }
+
+    public StandAlonePlainJdbcContactDao(Pool<Connection> connectionPool, String... sqlFilePaths) {
+        this.connectionPool = connectionPool;
         mapStatement(statement -> {
             Arrays.stream(sqlFilePaths)
                     .map(Paths::get)
@@ -68,7 +80,6 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
 
     @Override
     public Connection get() {
-        // TODO: 17/07/16 replace by requesting connection pool (DataSource)
-        return ExceptionalSupplier.getOrThrowUnchecked(() -> DriverManager.getConnection(JDBC_URL));
+        return connectionPool.get();
     }
 }

@@ -37,4 +37,8 @@ public interface ExceptionalSupplier<T, E extends Throwable> extends Supplier<Ex
     static <T, E extends Exception> T getOrThrowUnchecked(ExceptionalSupplier<T, E> exceptionalSupplier) {
         return call(exceptionalSupplier).getOrThrowUnchecked();
     }
+
+    static <T> T avoid(Object t) {
+        return null;
+    }
 }
