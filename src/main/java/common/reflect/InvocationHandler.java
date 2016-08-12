@@ -9,12 +9,6 @@ import java.util.function.Function;
 @FunctionalInterface
 public interface InvocationHandler<T> extends java.lang.reflect.InvocationHandler {
 
-    static <T> Function<InvocationHandler<T>, T> getProxyMakerFor(Class<T> anInterface) {
-        //noinspection unchecked
-        return invocationHandler -> (T) Proxy.newProxyInstance(
-                anInterface.getClassLoader(), new Class[]{anInterface}, invocationHandler);
-    }
-
     Object apply(T proxy, Method method, Function<T, ?> chain, Object[] args);
 
     @Override
@@ -34,5 +28,11 @@ public interface InvocationHandler<T> extends java.lang.reflect.InvocationHandle
             }
         //noinspection unchecked
         return apply((T) proxy, method, ExceptionalFunction.toUncheckedFunction(t -> method.invoke(t, args)), args);
+    }
+
+    static <T> Function<InvocationHandler<T>, T> getProxyMakerFor(Class<T> anInterface) {
+        //noinspection unchecked
+        return invocationHandler -> (T) Proxy.newProxyInstance(
+                anInterface.getClassLoader(), new Class[]{anInterface}, invocationHandler);
     }
 }
