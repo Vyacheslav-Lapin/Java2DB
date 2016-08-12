@@ -3,6 +3,7 @@ package common;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -15,6 +16,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * marked methods.
  */
 @Retention(RUNTIME)
-@Target({METHOD, TYPE})
+@Target({METHOD, TYPE, FIELD})
 public @interface Private {
 }

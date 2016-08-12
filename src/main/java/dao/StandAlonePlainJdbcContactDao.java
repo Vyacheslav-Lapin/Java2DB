@@ -2,6 +2,7 @@ package dao;
 
 import common.JdbcDao;
 import common.Pool;
+import common.Private;
 import common.functions.ExceptionalFunction;
 import common.functions.ExceptionalRunnable;
 import common.functions.ExceptionalSupplier;
@@ -21,26 +22,28 @@ import static common.functions.ExceptionalConsumer.toUncheckedConsumer;
 import static common.functions.ExceptionalFunction.toUncheckedFunction;
 
 @SuppressWarnings("WeakerAccess")
-public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
+@FunctionalInterface
+public interface StandAlonePlainJdbcContactDao extends ContactDao, JdbcDao {
 
-    private static final String DRIVER_CLASS_NAME = "org.h2.Driver";
-    private static final String JDBC_URL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1";
+    @Private
+    String DRIVER_CLASS_NAME = "org.h2.Driver";
 
-    static {
+    @Private
+    String JDBC_URL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1";
+
+    static ContactDao create(String... sqlFilePaths) {
         ExceptionalRunnable.run(() -> Class.forName(DRIVER_CLASS_NAME));
-    }
-
-    private Pool<Connection> connectionPool;
-
-    public StandAlonePlainJdbcContactDao(String... sqlFilePaths) {
-        this(new Pool<>(Connection.class,
+        return create(new Pool<>(Connection.class,
                         ExceptionalFunction.carryUnchacked(DriverManager::getConnection, JDBC_URL),
                         5),
                 sqlFilePaths);
     }
 
-    public StandAlonePlainJdbcContactDao(Pool<Connection> connectionPool, String... sqlFilePaths) {
-        this.connectionPool = connectionPool;
+    static ContactDao create(Pool<Connection> connectionPool, String... sqlFilePaths) {
+        return ((StandAlonePlainJdbcContactDao) connectionPool::get).executeScripts(sqlFilePaths);
+    }
+
+    default ContactDao executeScripts(String... sqlFilePaths) {
         mapStatement(statement -> {
             Arrays.stream(sqlFilePaths)
                     .map(Paths::get)
@@ -51,10 +54,11 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
                     .forEach(toUncheckedConsumer(statement::addBatch));
             return statement.executeBatch();
         }).executeOrThrowUnchecked();
+        return this;
     }
 
     @Override
-    public List<Contact> findAll() {
+    default List<Contact> findAll() {
         List<Contact> contacts = new ArrayList<>();
         mapAndReduceRows("SELECT id, first_name, last_name, birth_date FROM Contact",
                 resultSet -> new Contact(
@@ -68,7 +72,7 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
     }
 
     @Override
-    public ExceptionalSupplier<Optional<Contact>, SQLException> getQuery(long id) {
+    default ExceptionalSupplier<Optional<Contact>, SQLException> getQuery(long id) {
         return mapRow(
                 "SELECT first_name, last_name, birth_date FROM Contact WHERE id = " + id,
                 resultSet -> new Contact(id,
@@ -76,10 +80,5 @@ public class StandAlonePlainJdbcContactDao implements ContactDao, JdbcDao {
                         resultSet.getString("last_name"),
                         resultSet.getDate("birth_date").toLocalDate())
         );
-    }
-
-    @Override
-    public Connection get() {
-        return connectionPool.get();
     }
 }

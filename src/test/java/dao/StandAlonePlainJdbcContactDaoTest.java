@@ -13,7 +13,8 @@ import static org.junit.Assert.assertThat;
 
 public class StandAlonePlainJdbcContactDaoTest {
 
-    private static ContactDao contactDao = new StandAlonePlainJdbcContactDao("src/test/resources/db/1.sql");
+    private static ContactDao contactDao =
+            StandAlonePlainJdbcContactDao.create("src/test/resources/db/1.sql");
 
     @Test
     public void findAll() throws Exception {
