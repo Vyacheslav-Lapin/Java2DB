@@ -14,7 +14,7 @@ import static org.junit.Assert.assertThat;
 public class StandAlonePlainJdbcContactDaoTest {
 
     private static ContactDao contactDao =
-            StandAlonePlainJdbcContactDao.create("src/test/resources/db/1.sql");
+            StandAlonePlainJdbcContactDao.create("src/test/resources/db/");
 
     @Test
     public void findAll() throws Exception {

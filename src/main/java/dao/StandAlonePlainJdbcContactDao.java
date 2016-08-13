@@ -3,51 +3,79 @@ package dao;
 import common.JdbcDao;
 import common.Pool;
 import common.Private;
-import common.functions.ExceptionalFunction;
-import common.functions.ExceptionalRunnable;
-import common.functions.ExceptionalSupplier;
+import common.functions.*;
 import model.Contact;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static common.functions.ExceptionalConsumer.toUncheckedConsumer;
-import static common.functions.ExceptionalFunction.toUncheckedFunction;
 
 @SuppressWarnings("WeakerAccess")
 @FunctionalInterface
 public interface StandAlonePlainJdbcContactDao extends ContactDao, JdbcDao {
 
     @Private
-    String DRIVER_CLASS_NAME = "org.h2.Driver";
+    String JDBC_DRIVER_CLASS_KEY = "driver";
 
     @Private
-    String JDBC_URL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1";
+    String JDBC_URL_KEY = "url";
 
-    static ContactDao create(String... sqlFilePaths) {
-        ExceptionalRunnable.run(() -> Class.forName(DRIVER_CLASS_NAME));
+    @Private
+    String JDBC_CONNECTION_POOL_SIZE_KEY = "poolSize";
+
+    @Private
+    String DB_PROPERTIES_FILE_NAME = "db.properties";
+
+    @Private
+    String SQL_FILE_NAME_SUFFIX = ".sql";
+
+    static ContactDao create(String dbFilesFolderPath) {
+        try (InputStream inputStream = Files.newInputStream(Paths.get(dbFilesFolderPath + DB_PROPERTIES_FILE_NAME))) {
+            Properties properties = new Properties();
+            properties.load(inputStream);
+            return create(properties, dbFilesFolderPath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static ContactDao create(Properties properties, String dbFilesFolderPath) {
+        ExceptionalConsumer.call(Class::forName, (String) properties.remove(JDBC_DRIVER_CLASS_KEY));
+
+        String jdbcUrl = (String) properties.remove(JDBC_URL_KEY);
+        int jdbcConnectionPoolSize = Integer.parseInt((String) properties.remove(JDBC_CONNECTION_POOL_SIZE_KEY));
+
         return create(new Pool<>(Connection.class,
-                        ExceptionalFunction.carryUnchacked(DriverManager::getConnection, JDBC_URL),
-                        5),
-                sqlFilePaths);
+                        ExceptionalBiFunction.carryUnchacked(DriverManager::getConnection, jdbcUrl, properties),
+                        jdbcConnectionPoolSize),
+                dbFilesFolderPath);
     }
 
-    static ContactDao create(Pool<Connection> connectionPool, String... sqlFilePaths) {
-        return ((StandAlonePlainJdbcContactDao) connectionPool::get).executeScripts(sqlFilePaths);
+    static ContactDao create(Pool<Connection> connectionPool, String dbFilesFolderPath) {
+        List<Path> sqls = new ArrayList<>();
+        Path path;
+        for (int i = 0; (path = Paths.get(dbFilesFolderPath + ++i + SQL_FILE_NAME_SUFFIX)).toFile().exists();)
+                sqls.add(path);
+        return create(connectionPool, sqls.stream().toArray(Path[]::new));
     }
 
-    default ContactDao executeScripts(String... sqlFilePaths) {
+    static ContactDao create(Pool<Connection> connectionPool, Path... sqlFilePaths) {
+        return ((StandAlonePlainJdbcContactDao) connectionPool::get)
+                .executeScripts(sqlFilePaths);
+    }
+
+    default ContactDao executeScripts(Path... sqlFilePaths) {
         mapStatement(statement -> {
             Arrays.stream(sqlFilePaths)
-                    .map(Paths::get)
-                    .map(toUncheckedFunction(Files::readAllBytes))
+                    .map(ExceptionalFunction.toUncheckedFunction(Files::readAllBytes))
                     .map(String::new)
                     .map(s -> s.split(";"))
                     .flatMap(Arrays::stream)
