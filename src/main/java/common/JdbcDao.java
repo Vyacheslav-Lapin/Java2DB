@@ -5,13 +5,18 @@ import common.functions.ExceptionalFunction;
 import common.functions.ExceptionalRunnable;
 import common.functions.ExceptionalSupplier;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import static common.functions.ExceptionalConsumer.toUncheckedConsumer;
 
 @FunctionalInterface
 public interface JdbcDao extends Supplier<Connection> {
@@ -32,6 +37,19 @@ public interface JdbcDao extends Supplier<Connection> {
                 return statementMapper.get(statement);
             }
         });
+    }
+
+    default JdbcDao executeScripts(Path... sqlFilePaths) {
+        mapStatement(statement -> {
+            Arrays.stream(sqlFilePaths)
+                    .map(ExceptionalFunction.toUncheckedFunction(Files::readAllBytes))
+                    .map(String::new)
+                    .map(s -> s.split(";"))
+                    .flatMap(Arrays::stream)
+                    .forEach(toUncheckedConsumer(statement::addBatch));
+            return statement.executeBatch();
+        }).executeOrThrowUnchecked();
+        return this;
     }
 
     default <T> ExceptionalSupplier<T, SQLException> mapResultSet(

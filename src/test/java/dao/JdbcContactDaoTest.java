@@ -11,10 +11,10 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
-public class StandAlonePlainJdbcContactDaoTest {
+public class JdbcContactDaoTest {
 
     private static ContactDao contactDao =
-            StandAlonePlainJdbcContactDao.create("src/test/resources/db/");
+            JdbcContactDao.create("src/test/resources/db/");
 
     @Test
     public void findAll() throws Exception {
