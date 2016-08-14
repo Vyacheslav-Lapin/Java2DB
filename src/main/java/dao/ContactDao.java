@@ -5,8 +5,8 @@ import model.Contact;
 
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @SuppressWarnings("WeakerAccess")
 public interface ContactDao {
@@ -14,12 +14,12 @@ public interface ContactDao {
         return getQuery(id).getOrThrowUnchecked();
     }
 
-    default List<Contact> findAll() {
-        return Collections.emptyList();
+    default Stream<Contact> findAll() {
+        return Collections.<Contact>emptyList().stream();
     }
 
     default ExceptionalSupplier<Optional<Contact>, SQLException> getQuery(long id) {
-        return () -> findAll().stream()
+        return () -> findAll()
                 .filter(contact -> contact.getId() == id)
                 .findAny();
     }
