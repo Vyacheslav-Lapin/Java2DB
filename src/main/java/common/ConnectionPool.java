@@ -44,7 +44,7 @@ public interface ConnectionPool extends JdbcDao {
         return (
                 (ConnectionPool) new Pool<>(
                         Connection.class,
-                        ExceptionalBiFunction.carryUnchacked(DriverManager::getConnection, jdbcUrl, properties),
+                        ExceptionalBiFunction.supplyUnchecked(DriverManager::getConnection, jdbcUrl, properties),
                         size
                 )::get
         ).executeScripts(dbFilesFolderPath);

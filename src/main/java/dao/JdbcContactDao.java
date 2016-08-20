@@ -7,6 +7,7 @@ import common.functions.ExceptionalVarFunction;
 import model.Contact;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -20,23 +21,26 @@ public interface JdbcContactDao extends ContactDao, JdbcDao {
 
     @Override
     default Stream<Contact> findAll() {
-        return getStream("SELECT id, first_name, last_name, birth_date FROM Contact",
+        return collect(
+                "SELECT id, first_name, last_name, birth_date FROM Contact",
                 resultSet -> new Contact(
                         resultSet.getLong("id"),
                         resultSet.getString("first_name"),
                         resultSet.getString("last_name"),
-                        resultSet.getDate("birth_date").toLocalDate()));
+                        resultSet.getDate("birth_date").toLocalDate()),
+                ArrayList::new
+        ).getOrThrowUnchecked().stream();
     }
 
     @Override
     default ExceptionalSupplier<Optional<Contact>, SQLException> getQuery(long id) {
-        return ExceptionalVarFunction.carry(
-                mapPreparedStatement(
+        return ExceptionalVarFunction.supply(
+                mapPreparedRow(
                         "SELECT first_name, last_name, birth_date FROM Contact WHERE id = ?",
-                        resultSet -> !resultSet.next() ? Optional.empty() : Optional.of(new Contact(id,
+                        resultSet -> new Contact(id,
                                 resultSet.getString("first_name"),
                                 resultSet.getString("last_name"),
-                                resultSet.getDate("birth_date").toLocalDate()))),
+                                resultSet.getDate("birth_date").toLocalDate())),
                 id);
     }
 }

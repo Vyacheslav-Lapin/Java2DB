@@ -18,11 +18,22 @@ public interface ExceptionalVarFunction<T, R, E extends Throwable> extends VarFu
         }
     }
 
-    static <T, R, E extends Throwable> ExceptionalSupplier<R, E> carry(ExceptionalVarFunction<T, R, E> exceptionalVarFunction, T... params) {
+    @SuppressWarnings("unchecked")
+    default R getOrThrowUnchecked(T... params) {
+        return apply(params).getOrThrowUnchecked();
+    }
+
+    @SuppressWarnings("unchecked")
+    default void executeOrThrowUnchecked(T... params) {
+        getOrThrowUnchecked(params);
+    }
+
+    @SafeVarargs
+    static <T, R, E extends Throwable> ExceptionalSupplier<R, E> supply(ExceptionalVarFunction<T, R, E> exceptionalVarFunction, T... params) {
         return () -> exceptionalVarFunction.get(params);
     }
 
-    static <T, R, E extends Throwable> Supplier<R> carryUnchacked(ExceptionalVarFunction<T, R, E> exceptionalVarFunction, T... params) {
-        return carry(exceptionalVarFunction, params)::getOrThrowUnchecked;
+    static <T, R, E extends Throwable> Supplier<R> supplyUnchecked(ExceptionalVarFunction<T, R, E> exceptionalVarFunction, T... params) {
+        return supply(exceptionalVarFunction, params)::getOrThrowUnchecked;
     }
 }

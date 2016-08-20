@@ -3,6 +3,7 @@ package common.functions;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@FunctionalInterface
 public interface ExceptionalConsumer<T, E extends Throwable> extends Consumer<T> {
 
     void call(T t) throws E;
@@ -39,5 +40,15 @@ public interface ExceptionalConsumer<T, E extends Throwable> extends Consumer<T>
             //noinspection unchecked
             throw exceptionTransformer.apply((E) e);
         }
+    }
+
+    static <T, E extends Throwable> ExceptionalRunnable<E> supply(ExceptionalConsumer<T, E> exceptionalConsumer,
+                                                                  T param) {
+        return () -> exceptionalConsumer.accept(param);
+    }
+
+    static <T, E extends Throwable> Runnable supplyUnchacked(ExceptionalConsumer<T, E> exceptionalConsumer,
+                                                             T param) {
+        return supply(exceptionalConsumer, param);
     }
 }

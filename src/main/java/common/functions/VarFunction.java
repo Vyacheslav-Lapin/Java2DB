@@ -10,11 +10,11 @@ public interface VarFunction<T, R> {
     @SuppressWarnings("unchecked")
     R apply(T... t);
 
-    static <T, R> Supplier<R> carryFull(VarFunction<T, R> varFunction, T... params) {
+    static <T, R> Supplier<R> supply(VarFunction<T, R> varFunction, T... params) {
         return () -> varFunction.apply(params);
     }
 
-    static <T, R> VarFunction<T, R> carryPartial(VarFunction<T, R> varFunction, T... params) {
+    static <T, R> VarFunction<T, R> partial(VarFunction<T, R> varFunction, T... params) {
         return additionalParams -> {
             T[] result = Arrays.copyOf(params, params.length + additionalParams.length);
             System.arraycopy(additionalParams, 0, result, params.length, additionalParams.length);
