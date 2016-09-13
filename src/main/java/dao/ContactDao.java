@@ -4,7 +4,6 @@ import common.functions.ExceptionalSupplier;
 import model.Contact;
 
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -15,7 +14,7 @@ public interface ContactDao {
     }
 
     default Stream<Contact> findAll() {
-        return Collections.<Contact>emptyList().stream();
+        return Stream.empty();
     }
 
     default ExceptionalSupplier<Optional<Contact>, SQLException> getQuery(long id) {

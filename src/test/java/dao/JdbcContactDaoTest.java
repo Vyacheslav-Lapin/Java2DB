@@ -1,5 +1,6 @@
 package dao;
 
+import common.JdbcDao;
 import model.Contact;
 import org.junit.Test;
 
@@ -31,5 +32,11 @@ public class JdbcContactDaoTest {
     public void get() throws Exception {
         Contact contact = new Contact(2, "Scott", "Tiger", LocalDate.parse("1990-11-02"));
         assertThat(contactDao.get(2), is(Optional.of(contact)));
+    }
+
+    @Test
+    public void selectGeneratedCorrectly() throws Exception {
+        assertThat(JdbcDao.getQueryString(Contact.class.getConstructors()[0]),
+                is("SELECT id, first_name, last_name, birth_date FROM Contact"));
     }
 }

@@ -2,12 +2,18 @@ package common;
 
 import common.functions.*;
 
+import java.lang.reflect.Executable;
+import java.lang.reflect.Parameter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static common.functions.ExceptionalConsumer.toUncheckedConsumer;
@@ -161,5 +167,21 @@ public interface JdbcDao extends Supplier<Connection> {
         return preparedCollect(sql, rowMapper, HashSet::new)
                 .getOrThrowUnchecked(params)
                 .stream();
+    }
+
+
+    static String getQueryString(Executable executable) {
+        String typeName = executable.getAnnotatedReturnType().getType().getTypeName();
+        return "SELECT "
+                + Arrays.stream(executable.getParameters())
+                .map(Parameter::getName)
+                .map(JdbcDao::toDbName)
+                .collect(Collectors.joining(", "))
+                + " FROM "
+                + typeName.substring(typeName.lastIndexOf('.') + 1);
+    }
+
+    static String toDbName(String name) {
+        return name.replaceAll("[A-Z]", "_$0").toLowerCase();
     }
 }
