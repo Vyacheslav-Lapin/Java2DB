@@ -184,4 +184,15 @@ public interface JdbcDao extends Supplier<Connection> {
     static String toDbName(String name) {
         return name.replaceAll("[A-Z]", "_$0").toLowerCase();
     }
+
+    static String toCamelCase(String name) {
+        String[] words = name.split("_");
+        if (words.length > 1)
+            return words[0]
+                    + Arrays.stream(Arrays.copyOfRange(words, 1, words.length))
+                    .map(s -> Character.toUpperCase(s.charAt(0)) + s.substring(1))
+                    .collect(Collectors.joining());
+        else
+            return name;
+    }
 }

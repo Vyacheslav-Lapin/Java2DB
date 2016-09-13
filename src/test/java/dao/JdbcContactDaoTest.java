@@ -39,4 +39,9 @@ public class JdbcContactDaoTest {
         assertThat(JdbcDao.getQueryString(Contact.class.getConstructors()[0]),
                 is("SELECT id, first_name, last_name, birth_date FROM Contact"));
     }
+
+    @Test
+    public void readCorrectlyFieldsNamesFromDB() throws Exception {
+        assertThat(JdbcDao.toCamelCase("first_name"), is("firstName"));
+    }
 }
