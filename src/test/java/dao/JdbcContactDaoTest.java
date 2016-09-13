@@ -42,6 +42,6 @@ public class JdbcContactDaoTest {
 
     @Test
     public void readCorrectlyFieldsNamesFromDB() throws Exception {
-        assertThat(JdbcDao.toCamelCase("first_name"), is("firstName"));
+        assertThat(JdbcDao.toCamelCase("first_name_of_worker"), is("firstNameOfWorker"));
     }
 }

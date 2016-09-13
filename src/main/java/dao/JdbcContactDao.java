@@ -6,8 +6,8 @@ import common.functions.ExceptionalSupplier;
 import common.functions.ExceptionalVarFunction;
 import model.Contact;
 
+import java.lang.reflect.Constructor;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -21,15 +21,8 @@ public interface JdbcContactDao extends ContactDao, JdbcDao {
 
     @Override
     default Stream<Contact> findAll() {
-        return collect(
-                "SELECT id, first_name, last_name, birth_date FROM Contact",
-                resultSet -> new Contact(
-                        resultSet.getLong("id"),
-                        resultSet.getString("first_name"),
-                        resultSet.getString("last_name"),
-                        resultSet.getDate("birth_date").toLocalDate()),
-                ArrayList::new
-        ).getOrThrowUnchecked().stream();
+        //noinspection unchecked
+        return getObjects((Constructor<Contact>) Contact.class.getConstructors()[0]).stream();
     }
 
     @Override

@@ -2,15 +2,14 @@ package common;
 
 import common.functions.*;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Parameter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Optional;
+import java.sql.Date;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -169,6 +168,28 @@ public interface JdbcDao extends Supplier<Connection> {
                 .stream();
     }
 
+    default <T> Collection<T> getObjects(Constructor<T> constructor) {
+        String queryString = getQueryString(constructor);
+        ExceptionalFunction<ResultSet, T, SQLException> resultSetTSQLExceptionExceptionalFunction = resultSet -> {
+            Object[] param = Arrays.stream(constructor.getParameters())
+                    .map(Parameter::getName)
+                    .map(JdbcDao::toDbName)
+                    .map(ExceptionalFunction.toUncheckedFunction(resultSet::getObject))
+                    .map(JdbcDao::typeConverter)
+                    .toArray();
+            return ExceptionalFunction.getOrThrowUnchecked(constructor::newInstance,
+                    param);
+        };
+        return collect(
+                queryString,
+                resultSetTSQLExceptionExceptionalFunction,
+                ArrayList<T>::new)
+                .getOrThrowUnchecked();
+    }
+
+    static Object typeConverter(Object o) {
+        return o instanceof Date ? ((Date) o).toLocalDate() : o;
+    }
 
     static String getQueryString(Executable executable) {
         String typeName = executable.getAnnotatedReturnType().getType().getTypeName();
@@ -187,12 +208,9 @@ public interface JdbcDao extends Supplier<Connection> {
 
     static String toCamelCase(String name) {
         String[] words = name.split("_");
-        if (words.length > 1)
-            return words[0]
-                    + Arrays.stream(Arrays.copyOfRange(words, 1, words.length))
-                    .map(s -> Character.toUpperCase(s.charAt(0)) + s.substring(1))
-                    .collect(Collectors.joining());
-        else
-            return name;
+        return words.length == 1 ? name : words[0]
+                + Arrays.stream(Arrays.copyOfRange(words, 1, words.length))
+                .map(s -> Character.toUpperCase(s.charAt(0)) + s.substring(1))
+                .collect(Collectors.joining());
     }
 }
